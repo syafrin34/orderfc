@@ -96,8 +96,11 @@ func (uc *OrderUsecase) validateProducts(items []models.CheckoutItem) error {
 		}
 
 		//qty product
-		if item.Quantity <= 0 || item.Quantity > 1000 {
+		if item.Price <= 0 {
 			return fmt.Errorf("invalid price for product %d", item.ProductID)
+		}
+		if item.Quantity > 1000 {
+			return fmt.Errorf("invalid quantity  product %d maximum quantity is 1000", item.ProductID)
 		}
 
 	}

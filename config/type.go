@@ -24,5 +24,5 @@ type RedisConfig struct {
 	Password string `yaml:"password" validate:"required"`
 }
 type SecretConfig struct {
-	JWTSecret string `yaml:"jwtsecret" validate:"required"`
+	JWTSecret string `yaml:"jwt_secret" validate:"required"`
 }

@@ -32,9 +32,9 @@ func (h *OrderHandler) CheckOutOrder(c *gin.Context) {
 
 	// auth session Login -->vcek user id
 	usrIDStr, isExists := c.Get("user_id")
-	if isExists {
+	if !isExists {
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"erro": "unauthorized",
+			"error": "unauthorized",
 		})
 		return
 	}
@@ -59,7 +59,7 @@ func (h *OrderHandler) CheckOutOrder(c *gin.Context) {
 	if err != nil {
 		logger.Logger.WithFields(logrus.Fields{
 			"param": param,
-		}).Errorf("h.orderUseCae.CekecoutOrder got error", err.Error())
+		}).Errorf("h.orderusecase.checkoutorder got error", err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
