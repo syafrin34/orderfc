@@ -15,4 +15,5 @@ func main() {
 	resource.InitDB(&cfg)
 	resource.InitRedis(&cfg)
 	logger.SetupLogger()
+
 }
