@@ -14,17 +14,17 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type OrderUseCase struct {
+type OrderUsecase struct {
 	OrderService service.OrderService
 }
 
-func NewOrderUsecase(ou service.OrderService) *OrderUseCase {
-	return &OrderUseCase{
+func NewOrderUsecase(ou service.OrderService) *OrderUsecase {
+	return &OrderUsecase{
 		OrderService: ou,
 	}
 }
 
-func (uc *OrderUseCase) CheckOrder(ctx context.Context, param *models.CheckoutRequest) (int64, error) {
+func (uc *OrderUsecase) CheckOutOrder(ctx context.Context, param *models.CheckoutRequest) (int64, error) {
 	var orderID int64
 
 	//check idempotency
@@ -87,7 +87,7 @@ func (uc *OrderUseCase) CheckOrder(ctx context.Context, param *models.CheckoutRe
 	return orderID, nil
 }
 
-func (uc *OrderUseCase) validateProducts(items []models.CheckoutItem) error {
+func (uc *OrderUsecase) validateProducts(items []models.CheckoutItem) error {
 	seen := map[int64]bool{}
 	for _, item := range items {
 		// dupliacated product
@@ -105,7 +105,7 @@ func (uc *OrderUseCase) validateProducts(items []models.CheckoutItem) error {
 	return nil
 }
 
-func (uc *OrderUseCase) calculateOrderSummary(items []models.CheckoutItem) (int, float64) {
+func (uc *OrderUsecase) calculateOrderSummary(items []models.CheckoutItem) (int, float64) {
 	var TotalQty int
 	var totalAmount float64
 
@@ -116,7 +116,7 @@ func (uc *OrderUseCase) calculateOrderSummary(items []models.CheckoutItem) (int,
 	return TotalQty, totalAmount
 }
 
-func (uc *OrderUseCase) constructOrderDetail(items []models.CheckoutItem) (string, string) {
+func (uc *OrderUsecase) constructOrderDetail(items []models.CheckoutItem) (string, string) {
 	//products, order history
 	productJson, _ := json.Marshal(items)
 	history := []map[string]interface{}{
