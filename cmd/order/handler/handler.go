@@ -5,6 +5,7 @@ import (
 	"orderfc/cmd/order/usecase"
 	"orderfc/infrastructure/logger"
 	"orderfc/models"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -59,7 +60,7 @@ func (h *OrderHandler) CheckOutOrder(c *gin.Context) {
 	if err != nil {
 		logger.Logger.WithFields(logrus.Fields{
 			"param": param,
-		}).Errorf("h.orderusecase.checkoutorder got error", err.Error())
+		}).Errorf("h.orderusecase.checkoutorder got error %v", err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -70,6 +71,46 @@ func (h *OrderHandler) CheckOutOrder(c *gin.Context) {
 		"message":  "order created",
 		"order_id": orderID,
 	})
-	return
+
+}
+
+func (h *OrderHandler) GetOrderHistory(c *gin.Context) {
+	var param models.OrderHistoryParam
+	userIDStr, isExists := c.Get("user_id")
+	if !isExists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "Unauthorize",
+		})
+		return
+	}
+
+	userID, ok := userIDStr.(float64)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "invalid user id",
+		})
+		return
+	}
+
+	statusStr := c.DefaultQuery("status", "0") // 0 ==> showall
+	status, _ := strconv.Atoi(statusStr)
+
+	param = models.OrderHistoryParam{
+		UserID: int64(userID),
+		Status: status,
+	}
+	orderHistory, err := h.OrderUsecase.GetOrderHistoryByUserID(c.Request.Context(), param)
+	if err != nil {
+		logger.Logger.WithFields(logrus.Fields{
+			"param": param,
+		}).Errorf("h.OrderUsecase.GetOrderHistoryByUserID got error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": orderHistory,
+	})
 
 }

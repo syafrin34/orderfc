@@ -32,7 +32,11 @@ type CheckoutRequest struct {
 	ShippingAddress  string         `json:"shipping_address"`
 	IdempotencyToken string         `json:"idempotency_token"`
 }
-type OrderHistory struct {
+type OrderHistoryParam struct {
+	UserID int64
+	Status int
+}
+type OrderHistoryResponse struct {
 	OrderID         int64           `jsonn:"order_id"`
 	TotalAmount     float64         `json:"total_amount"`
 	TotalQty        int             `json:"total_qty"`
@@ -52,4 +56,15 @@ type OrderRequestLog struct {
 	ID               int64     `json:"id"`
 	IdempotencyToken string    `json:"idempotency_token"`
 	CreateTime       time.Time `json:"create_time"`
+}
+
+type OrderHistoryResult struct {
+	ID              int64 `gorm:"column.id"`
+	Amount          float64
+	TotalQuantity   int `gorm:"column:total_qty"`
+	Status          int
+	PaymentMethod   string
+	ShippingAddress string
+	Products        string `gorm:"column:products"`
+	OrderHistory    string `gorm:"column:order_history"`
 }
