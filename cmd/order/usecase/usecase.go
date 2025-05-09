@@ -8,6 +8,7 @@ import (
 	"orderfc/cmd/order/service"
 	"orderfc/infrastructure/constant"
 	"orderfc/infrastructure/logger"
+	"orderfc/kafka"
 	"orderfc/models"
 	"time"
 
@@ -15,12 +16,14 @@ import (
 )
 
 type OrderUsecase struct {
-	OrderService service.OrderService
+	OrderService  service.OrderService
+	KafkaProducer kafka.KafkaProducer
 }
 
-func NewOrderUsecase(ou service.OrderService) *OrderUsecase {
+func NewOrderUsecase(ou service.OrderService, kafkaProduceer kafka.KafkaProducer) *OrderUsecase {
 	return &OrderUsecase{
-		OrderService: ou,
+		OrderService:  ou,
+		KafkaProducer: kafkaProduceer,
 	}
 }
 
@@ -84,16 +87,37 @@ func (uc *OrderUsecase) CheckOutOrder(ctx context.Context, param *models.Checkou
 
 	//todo
 	// connect to payment service -> infoin payment request
+	// kafka
+	// publish order created to kafka
+	orderCreatedEvent := models.OrderCreatedEvent{
+		OrderID:         orderID,
+		UserID:          param.UserID,
+		TotalAmount:     order.Amount,
+		PaymentMethod:   param.PaymentMethod,
+		ShippingAddress: param.ShippingAddress,
+	}
+	err = uc.KafkaProducer.PublishOrderCreated(ctx, orderCreatedEvent)
+	if err != nil {
+		return 0, err
+	}
 	return orderID, nil
 }
 
-func (uc *OrderUsecase) validateProducts(items []models.CheckoutItem) error {
+func (uc *OrderUsecase) validateProducts(ctx context.Context, items []models.CheckoutItem) error {
 	seen := map[int64]bool{}
 	for _, item := range items {
-		// dupliacated product
-		if seen[item.ProductID] {
-			return fmt.Errorf("duplicate product: %d", item.ProductID)
+		productInfo, err := uc.OrderService.GerProductInfo(ctx, item.ProductID)
+		if err != nil {
+			return fmt.Errorf("failed get product info: %d", item.ProductID)
 		}
+		//product price
+		if item.Price != productInfo.Price {
+			return fmt.Errorf("invalid price for product  %d", item.ProductID)
+		}
+		// dupliacated product
+		// if seen[item.ProductID] {
+		// 	return fmt.Errorf("duplicate product: %d", item.ProductID)
+		// }
 
 		//qty product
 		if item.Price <= 0 {
@@ -101,6 +125,11 @@ func (uc *OrderUsecase) validateProducts(items []models.CheckoutItem) error {
 		}
 		if item.Quantity > 1000 {
 			return fmt.Errorf("invalid quantity  product %d maximum quantity is 1000", item.ProductID)
+		}
+		//validate stock
+
+		if item.Quantity > productInfo.Stock {
+			return fmt.Errorf("invalid product %d, product stock is only %d", item.ProductID, item.Quantity)
 		}
 
 	}
