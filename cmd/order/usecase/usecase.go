@@ -42,7 +42,7 @@ func (uc *OrderUsecase) CheckOutOrder(ctx context.Context, param *models.Checkou
 	}
 
 	//validate product
-	err := uc.validateProducts(param.Items)
+	err := uc.validateProducts(ctx, param.Items)
 	if err != nil {
 		return 0, err
 	}
@@ -104,15 +104,15 @@ func (uc *OrderUsecase) CheckOutOrder(ctx context.Context, param *models.Checkou
 }
 
 func (uc *OrderUsecase) validateProducts(ctx context.Context, items []models.CheckoutItem) error {
-	seen := map[int64]bool{}
+	//	seen := map[int64]bool{}
 	for _, item := range items {
 		productInfo, err := uc.OrderService.GerProductInfo(ctx, item.ProductID)
 		if err != nil {
-			return fmt.Errorf("failed get product info: %d", item.ProductID)
+			return fmt.Errorf("failed get product info: %d, err: %s", item.ProductID, err.Error())
 		}
 		//product price
 		if item.Price != productInfo.Price {
-			return fmt.Errorf("invalid price for product  %d", item.ProductID)
+			return fmt.Errorf("invalid input price for product  %d (%.2f - harga produk adalah %.2f)", item.ProductID, item.Price, productInfo.Price)
 		}
 		// dupliacated product
 		// if seen[item.ProductID] {
@@ -129,7 +129,7 @@ func (uc *OrderUsecase) validateProducts(ctx context.Context, items []models.Che
 		//validate stock
 
 		if item.Quantity > productInfo.Stock {
-			return fmt.Errorf("invalid product %d, product stock is only %d", item.ProductID, item.Quantity)
+			return fmt.Errorf("invalid product %d, product stock is only %d", item.ProductID, productInfo.Stock)
 		}
 
 	}

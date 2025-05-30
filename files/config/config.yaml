@@ -11,6 +11,6 @@ redis:
   port: 6379
   password: 
 product:
-  host: localhost:8081
+  host: http://localhost:8081
 secret:
   jwt_secret: "53creT!"

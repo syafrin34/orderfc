@@ -27,7 +27,12 @@ func NewOrderRepository(db *gorm.DB, redis *redis.Client, productHost string) *O
 
 func (r *OrderRepository) GetProductInfo(ctx context.Context, productID int64) (models.Product, error) {
 	var product models.Product
+
+	//baca ke config --> utk set product host
 	url := fmt.Sprintf("%s/v1/product/%d", r.ProductHost, productID)
+	// logger.Logger.WithFields(logrus.Fields{
+	// 	"info url": url,
+	// })
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return models.Product{}, err
@@ -41,10 +46,13 @@ func (r *OrderRepository) GetProductInfo(ctx context.Context, productID int64) (
 		return models.Product{}, fmt.Errorf("invalid response - get product info")
 	}
 
-	err = json.NewDecoder(resp.Body).Decode(&product)
+	//
+	var response models.GetProductInfo
+	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
 		return models.Product{}, err
 	}
+	product = response.Product
 	return product, nil
 
 }

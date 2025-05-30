@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"orderfc/cmd/order/handler"
 	"orderfc/cmd/order/repository"
@@ -35,5 +36,10 @@ func main() {
 	router := gin.Default()
 	routes.SetupRoutes(router, *orderhandler, cfg.Secret.JWTSecret)
 	router.Run(":" + port)
+
+	// kafka consumer
+	kafkaPaymentSuccessConsumer := kafka.NewPaymentSuccessConsumer([]string{"localhost:9093"}, "paymentsuccess", *orderService, *kafkaProducer)
+	kafkaPaymentSuccessConsumer.Start(context.Background())
+	logger.Logger.Printf("server running on port: %s", port)
 
 }
