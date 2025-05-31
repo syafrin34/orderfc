@@ -100,7 +100,33 @@ func (uc *OrderUsecase) CheckOutOrder(ctx context.Context, param *models.Checkou
 	if err != nil {
 		return 0, err
 	}
+
+	updateStockEvent := models.ProductStockUpdateEvent{
+		OrderID:   orderID,
+		Products:  convertCheckoutItemToProductItems(param.Items),
+		EventTime: time.Now(),
+	}
+
+	go func() {
+		if err := uc.KafkaProducer.PublishProductStockUpdate(context.Background(), updateStockEvent); err != nil {
+			fmt.Println("Failed to send kafka event: ", err)
+		} else {
+			fmt.Println("StockUpdate event sent to kafka")
+		}
+	}()
 	return orderID, nil
+
+}
+
+func convertCheckoutItemToProductItems(source []models.CheckoutItem) []models.ProductItem {
+	result := make([]models.ProductItem, len(source))
+	for index, item := range source {
+		result[index] = models.ProductItem{
+			ProductID: item.ProductID,
+			Qty:       item.Quantity,
+		}
+	}
+	return result
 }
 
 func (uc *OrderUsecase) validateProducts(ctx context.Context, items []models.CheckoutItem) error {

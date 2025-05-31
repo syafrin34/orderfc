@@ -11,6 +11,7 @@ import (
 	"orderfc/config"
 	"orderfc/infrastructure/logger"
 	"orderfc/kafka"
+	"orderfc/kafka/consumer"
 	"orderfc/routes"
 
 	"github.com/gin-gonic/gin"
@@ -38,8 +39,12 @@ func main() {
 	router.Run(":" + port)
 
 	// kafka consumer
-	kafkaPaymentSuccessConsumer := kafka.NewPaymentSuccessConsumer([]string{"localhost:9093"}, "paymentsuccess", *orderService, *kafkaProducer)
-	kafkaPaymentSuccessConsumer.Start(context.Background())
+	kafkaPaymentSuccessConsumer := consumer.NewPaymentSuccessConsumer([]string{"localhost:9093"}, "payment.success", *orderService, *kafkaProducer)
+	kafkaPaymentSuccessConsumer.StartPaymentSuccessConsumer(context.Background())
+
+	kafkaPaymentFailedConsumer := consumer.NewPaymentFailedConsumer([]string{"localhost:9093"}, "payment.failed", *orderService, *kafkaProducer)
+	kafkaPaymentFailedConsumer.StartPaymentFailedConsumer(context.Background())
+
 	logger.Logger.Printf("server running on port: %s", port)
 
 }
